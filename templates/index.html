@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}AUTISO — AI-Assisted Autism Behaviour &amp; Screening Analysis{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="container hero-inner">
+    <div class="hero-copy">
+      <span class="eyebrow">Machine Learning · Healthcare Screening</span>
+      <h1>Early insights,<br><span class="gradient-text">clearer conversations.</span></h1>
+      <p class="lead">
+        AUTISO uses a machine-learning model trained on validated autism screening data to
+        analyse AQ-10 responses and personal background factors, offering quick preliminary
+        insight that helps you decide on the next step.
+      </p>
+      <div class="hero-actions">
+        <a href="{{ url_for('assess') }}" class="btn btn-primary btn-lg">Start Free Assessment</a>
+        <a href="{{ url_for('about') }}" class="btn btn-outline btn-lg">How it works</a>
+      </div>
+      <p class="hero-disclaimer">Screening support only — not a clinical diagnosis.</p>
+    </div>
+    <div class="hero-card">
+      <div class="hero-card-header">
+        <span class="dot dot-red"></span><span class="dot dot-amber"></span><span class="dot dot-green"></span>
+        <span class="hero-card-title">AUTISO engine</span>
+      </div>
+      <div class="hero-card-body">
+        <div class="mini-row"><span>AQ-10 responses</span><strong>10 items</strong></div>
+        <div class="mini-row"><span>Background features</span><strong>9 attributes</strong></div>
+        <div class="mini-row"><span>Classifier</span><strong>{{ meta.best_model }}</strong></div>
+        <div class="meter"><div class="meter-fill" style="width: {{ (meta.best_cv_accuracy * 100) | round(1) }}%"></div></div>
+        <p class="mini-caption">Cross-validated accuracy: {{ '%.1f'|format(meta.best_cv_accuracy * 100) }}%</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section stats-band">
+  <div class="container stats-grid">
+    <div class="stat-card reveal">
+      <span class="stat-value">{{ meta.stats.rows }}</span>
+      <span class="stat-label">screening records used for training</span>
+    </div>
+    <div class="stat-card reveal">
+      <span class="stat-value">{{ meta.stats.asd_positive }}</span>
+      <span class="stat-label">positive cases balanced with SMOTE</span>
+    </div>
+    <div class="stat-card reveal">
+      <span class="stat-value">{{ meta.best_model }}</span>
+      <span class="stat-label">best performing classifier selected</span>
+    </div>
+    <div class="stat-card reveal">
+      <span class="stat-value">{{ '%.1f'|format(meta.best_cv_accuracy * 100) }}%</span>
+      <span class="stat-label">five-fold cross-validation accuracy</span>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2 class="section-title">How AUTISO works</h2>
+    <p class="section-subtitle">Three simple steps from questions to clarity.</p>
+    <div class="steps-grid">
+      <div class="step-card reveal">
+        <span class="step-number">01</span>
+        <h3>Answer the questionnaire</h3>
+        <p>Respond to ten research-backed AQ-10 statements and share a few background details.</p>
+      </div>
+      <div class="step-card reveal">
+        <span class="step-number">02</span>
+        <h3>Model analysis</h3>
+        <p>Your responses are processed by a tuned ensemble model trained on labelled screening data.</p>
+      </div>
+      <div class="step-card reveal">
+        <span class="step-number">03</span>
+        <h3>Receive guidance</h3>
+        <p>Get an instant indicator with confidence level and suggested next steps — in under a minute.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section cta-section">
+  <div class="container cta-box">
+    <h2>Ready to take the first step?</h2>
+    <p>The assessment takes less than two minutes, and nothing you enter is ever stored or shared.</p>
+    <a href="{{ url_for('assess') }}" class="btn btn-light btn-lg">Begin Assessment</a>
+  </div>
+</section>
+{% endblock %}

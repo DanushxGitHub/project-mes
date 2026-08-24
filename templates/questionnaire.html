@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Questionnaire — AUTISO{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div class="container">
+    <span class="eyebrow">Screening Assessment · Step 2 of 2</span>
+    <h1>AQ-10 Questionnaire</h1>
+    <p class="lead">
+      Answer the ten statements below based on how you usually behave.
+      There are no right or wrong answers.
+    </p>
+    <div class="score-chip" id="liveScore" hidden>
+      Current indicator score: <strong><span id="scoreValue">0</span>/10</strong>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    {% if error %}
+    <div class="alert alert-error" role="alert">{{ error }}</div>
+    {% endif %}
+
+    <form id="assessmentForm" action="{{ url_for('result') }}" method="post" novalidate>
+      <input type="hidden" name="age" value="{{ background.age }}">
+      <input type="hidden" name="gender" value="{{ background.gender }}">
+      <input type="hidden" name="ethnicity" value="{{ background.ethnicity }}">
+      <input type="hidden" name="jaundice" value="{{ background.jaundice }}">
+      <input type="hidden" name="austim" value="{{ background.austim }}">
+      <input type="hidden" name="contry_of_res" value="{{ background.contry_of_res }}">
+      <input type="hidden" name="used_app_before" value="{{ background.used_app_before }}">
+      <input type="hidden" name="relation" value="{{ background.relation }}">
+
+      {% for question in questions %}
+      <fieldset class="question-card">
+        <legend>
+          <span class="question-number">{{ '%02d'|format(question.id) }}</span>
+          {{ question.text }}
+        </legend>
+        <div class="pill-group" data-question="{{ question.id }}">
+          {% for value, label in [
+            ('da', 'Definitely agree'),
+            ('sa', 'Slightly agree'),
+            ('sd', 'Slightly disagree'),
+            ('dd', 'Definitely disagree')
+          ] %}
+          <label class="pill-option">
+            <input type="radio" name="q{{ question.id }}" value="{{ value }}" required
+                   {% if saved_answers and saved_answers['q' ~ question.id] == value %}checked{% endif %}>
+            <span>{{ label }}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+      {% endfor %}
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-outline btn-lg"
+                formaction="{{ url_for('assess') }}" formnovalidate>← Back</button>
+        <button type="submit" class="btn btn-primary btn-lg">Analyse My Responses</button>
+      </div>
+      <p class="form-footnote">Use Back to review or change your background information — your answers here are kept.</p>
+    </form>
+  </div>
+</section>
+{% endblock %}

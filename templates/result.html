@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Result — AUTISO{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div class="container">
+    <span class="eyebrow">Step complete</span>
+    <h1>Assessment Result</h1>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container result-layout">
+
+    <div class="result-banner {{ 'banner-flagged' if prediction == 1 else 'banner-clear' }}">
+      <div class="banner-icon">{{ '🧩' if prediction == 1 else '🌿' }}</div>
+      <div class="banner-text">
+        <h2>{{ 'Traits associated with autism were detected' if prediction == 1 else 'No strong autism indicators detected' }}</h2>
+        <p>
+          {{ 'Your responses match patterns commonly observed in individuals later diagnosed with ASD. This is NOT a diagnosis — it means a professional evaluation is worth exploring.' if prediction == 1 else
+             'Your responses do not closely match the patterns the model associates with ASD. If concerns remain, speaking with a professional is still encouraged.' }}
+        </p>
+        <p class="banner-model">Analysed by {{ meta.best_model }} · confidence {{ '%.1f'|format(confidence * 100) }}%</p>
+      </div>
+    </div>
+
+    <div class="result-grid">
+      <div class="card">
+        <h3>Model confidence</h3>
+        <div class="meter meter-lg"><div class="meter-fill" id="confidenceFill" data-width="{{ '%.1f'|format(confidence * 100) }}"></div></div>
+        <p class="caption">The model assigns {{ '%.1f'|format(confidence * 100) }}% confidence to the outcome above.</p>
+      </div>
+
+      <div class="card">
+        <h3>AQ-10 indicator score</h3>
+        <div class="score-ring-wrap" style="--score-pct: {{ total_score * 10 }}">
+          <span class="score-ring-value">{{ total_score }}<small>/10</small></span>
+        </div>
+        <p class="caption">
+          Scores of 6 or above on the AQ-10 traditionally suggest further clinical assessment.
+        </p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Your responses</h3>
+      <ul class="answer-list">
+        {% for entry in selections %}
+        <li>
+          <span class="answer-number">{{ '%02d'|format(entry.item.id) }}</span>
+          <span class="answer-text">{{ entry.item.text }}</span>
+          <span class="answer-tag {{ 'tag-agree' if entry.choice in ('da', 'sa') else 'tag-disagree' }}">
+            {{ 'Agree' if entry.choice in ('da', 'sa') else 'Disagree' }}{{ ' · +1' if entry.scored else '' }}
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="result-grid">
+      <div class="card">
+        <h3>Background details</h3>
+        <ul class="detail-list">
+          {% for label, value in summary %}
+          <li><span>{{ label }}</span><strong>{{ value }}</strong></li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="card next-steps">
+        <h3>Suggested next steps</h3>
+        {% if prediction == 1 %}
+        <ul>
+          <li>Share these results with a GP, psychologist, or developmental specialist.</li>
+          <li>Request a referral for a formal autism evaluation.</li>
+          <li>Keep a diary of behaviours and situations you find challenging.</li>
+        </ul>
+        {% else %}
+        <ul>
+          <li>If specific concerns remain, discuss them with a healthcare professional.</li>
+          <li>Screenings can miss traits — trust lived experience over any single score.</li>
+          <li>Retake this screening periodically if circumstances change.</li>
+        </ul>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="disclaimer-box">
+      <strong>Important:</strong> AUTISO is a preliminary screening-support tool built for educational purposes.
+      It cannot diagnose autism spectrum disorder. Only a qualified clinician can provide a diagnosis.
+    </div>
+
+    <div class="result-actions">
+      <a href="{{ url_for('assess') }}" class="btn btn-outline">Retake Assessment</a>
+      <a href="{{ url_for('home') }}" class="btn btn-primary">Back to Home</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

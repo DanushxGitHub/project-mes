@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}About — AUTISO{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div class="container">
+    <span class="eyebrow">Project overview</span>
+    <h1>About AUTISO</h1>
+    <p class="lead">
+      AUTISO (AI-Assisted Autism Behaviour &amp; Screening Analysis) is an educational machine-learning
+      project that turns a widely used screening questionnaire into an interactive web experience.
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2 class="section-title">The data behind the model</h2>
+    <p class="section-subtitle">
+      Training uses the public Kaggle autism-screening dataset: {{ meta.stats.rows }} labelled records
+      combining ten AQ-10 behavioural indicators with demographic and historical attributes.
+    </p>
+    <div class="pipeline-grid">
+      <div class="pipeline-card"><h3>Exploratory analysis</h3><p>Distributions, class imbalance and correlations were studied before modelling.</p></div>
+      <div class="pipeline-card"><h3>Cleaning &amp; encoding</h3><p>Redundant identifiers removed, rare categories merged, outliers capped, labels encoded.</p></div>
+      <div class="pipeline-card"><h3>Balancing</h3><p>SMOTE oversampling removed the strong class imbalance in ASD-positive cases.</p></div>
+      <div class="pipeline-card"><h3>Model tuning</h3><p>Three classifiers compared with five-fold cross-validation and randomised hyperparameter search.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section alt-bg">
+  <div class="container">
+    <h2 class="section-title">Model comparison</h2>
+    <p class="section-subtitle">All models were trained on the same balanced data and evaluated on a held-out 20% test set.</p>
+    <div class="table-wrap">
+      <table class="compare-table">
+        <thead>
+          <tr><th>Model</th><th>CV accuracy</th><th>Test accuracy</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          {% for name, result in metrics.items() %}
+          <tr class="{{ 'highlight-row' if name == meta.best_model }}">
+            <td>{{ name }}</td>
+            <td>{{ '%.1f'|format(result.cv_accuracy * 100) }}%</td>
+            <td>{{ '%.1f'|format(result.test_accuracy * 100) }}%</td>
+            <td>{% if name == meta.best_model %}<span class="badge badge-best">Selected</span>{% else %}<span class="badge">Candidate</span>{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2 class="section-title">Technology stack</h2>
+    <div class="stack-badges">
+      <span class="stack-badge">Python</span>
+      <span class="stack-badge">Flask</span>
+      <span class="stack-badge">pandas</span>
+      <span class="stack-badge">scikit-learn</span>
+      <span class="stack-badge">XGBoost</span>
+      <span class="stack-badge">imbalanced-learn (SMOTE)</span>
+      <span class="stack-badge">HTML / CSS / JavaScript</span>
+    </div>
+
+    <div class="ethics-note">
+      <h3>Ethical considerations</h3>
+      <p>
+        Automated screening tools carry risk when misused. AUTISO is designed to support — never replace —
+        professional judgement. Results depend on honest self-reporting and on data that may not represent
+        every population equally. Any concerning result should lead to a conversation with a qualified clinician,
+        not to a self-diagnosis.
+      </p>
+    </div>
+  </div>
+</section>
+{% endblock %}

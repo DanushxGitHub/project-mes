@@ -1,0 +1,67 @@
+{
+  "DecisionTree": {
+    "cv_accuracy": 0.8523,
+    "test_accuracy": 0.8375,
+    "best_params": {
+      "min_samples_split": 6,
+      "min_samples_leaf": 1,
+      "max_depth": 10,
+      "criterion": "entropy"
+    },
+    "confusion_matrix": [
+      [
+        106,
+        22
+      ],
+      [
+        4,
+        28
+      ]
+    ],
+    "classification_report": "              precision    recall  f1-score   support\n\n      No ASD       0.96      0.83      0.89       128\n         ASD       0.56      0.88      0.68        32\n\n    accuracy                           0.84       160\n   macro avg       0.76      0.85      0.79       160\nweighted avg       0.88      0.84      0.85       160\n"
+  },
+  "RandomForest": {
+    "cv_accuracy": 0.909,
+    "test_accuracy": 0.8562,
+    "best_params": {
+      "n_estimators": 50,
+      "min_samples_split": 2,
+      "min_samples_leaf": 1,
+      "max_depth": 10,
+      "bootstrap": false
+    },
+    "confusion_matrix": [
+      [
+        111,
+        17
+      ],
+      [
+        6,
+        26
+      ]
+    ],
+    "classification_report": "              precision    recall  f1-score   support\n\n      No ASD       0.95      0.87      0.91       128\n         ASD       0.60      0.81      0.69        32\n\n    accuracy                           0.86       160\n   macro avg       0.78      0.84      0.80       160\nweighted avg       0.88      0.86      0.86       160\n"
+  },
+  "XGBoost": {
+    "cv_accuracy": 0.9032,
+    "test_accuracy": 0.8438,
+    "best_params": {
+      "subsample": 0.75,
+      "n_estimators": 400,
+      "max_depth": 7,
+      "learning_rate": 0.3,
+      "colsample_bytree": 0.5
+    },
+    "confusion_matrix": [
+      [
+        111,
+        17
+      ],
+      [
+        8,
+        24
+      ]
+    ],
+    "classification_report": "              precision    recall  f1-score   support\n\n      No ASD       0.93      0.87      0.90       128\n         ASD       0.59      0.75      0.66        32\n\n    accuracy                           0.84       160\n   macro avg       0.76      0.81      0.78       160\nweighted avg       0.86      0.84      0.85       160\n"
+  }
+}
