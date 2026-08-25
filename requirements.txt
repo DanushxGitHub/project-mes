@@ -6,3 +6,4 @@ imbalanced-learn==0.14.2
 numpy==2.5.2
 joblib==1.5.3
 gunicorn==23.0.0
+google-genai>=1.0.0

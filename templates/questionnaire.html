@@ -3,7 +3,7 @@
 {% block content %}
 <section class="page-head">
   <div class="container">
-    <span class="eyebrow">Screening Assessment · Step 2 of 2</span>
+    <span class="eyebrow">Screening Assessment · Step 2 of 3</span>
     <h1>AQ-10 Questionnaire</h1>
     <p class="lead">
       Answer the ten statements below based on how you usually behave.
@@ -21,7 +21,7 @@
     <div class="alert alert-error" role="alert">{{ error }}</div>
     {% endif %}
 
-    <form id="assessmentForm" action="{{ url_for('result') }}" method="post" novalidate>
+    <form id="assessmentForm" action="{{ url_for('followup') }}" method="post" novalidate>
       <input type="hidden" name="age" value="{{ background.age }}">
       <input type="hidden" name="gender" value="{{ background.gender }}">
       <input type="hidden" name="ethnicity" value="{{ background.ethnicity }}">
@@ -57,7 +57,7 @@
       <div class="form-actions">
         <button type="submit" class="btn btn-outline btn-lg"
                 formaction="{{ url_for('assess') }}" formnovalidate>← Back</button>
-        <button type="submit" class="btn btn-primary btn-lg">Analyse My Responses</button>
+        <button type="submit" class="btn btn-primary btn-lg">Continue to Follow-up →</button>
       </div>
       <p class="form-footnote">Use Back to review or change your background information — your answers here are kept.</p>
     </form>

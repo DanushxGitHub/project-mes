@@ -1,6 +1,7 @@
 import json
 import os
 import pickle
+import re
 from pathlib import Path
 
 import pandas as pd
@@ -36,7 +37,104 @@ QUESTION_ITEMS = [
 
 AGREE_VALUES = {"da", "sa"}
 
+GEMINI_MODEL = "gemini-2.5-flash-lite"
+
+DEFAULT_FOLLOW_UPS = [
+    "How do you feel when plans change at the last minute?",
+    "Do you find it easier to focus on small details rather than the big picture?",
+    "How tiring do you find extended small talk with other people?",
+    "Do you ever repeat movements or phrases while concentrating on something?",
+    "How comfortable are you when meeting someone new without preparation?",
+]
+
+try:
+    from google import genai
+
+    _api_key = os.environ.get("GEMINI_API_KEY")
+    gemini_client = genai.Client(api_key=_api_key) if _api_key else None
+except Exception:
+    gemini_client = None
+
 app = Flask(__name__)
+
+
+def ask_gemini(prompt):
+    if gemini_client is None:
+        return None
+    try:
+        response = gemini_client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt,
+        )
+        return (response.text or "").strip() or None
+    except Exception:
+        return None
+
+
+def generate_follow_up_questions(selections, total_score, background):
+    scored_items = ", ".join(
+        f"Q{s['item']['id']}" for s in selections if s["scored"]
+    ) or "none"
+    gender_label = "male" if background["gender"] == "m" else "female"
+    prompt = f"""You are assisting a preliminary autism screening tool (educational, not diagnostic).
+The user completed an AQ-10 questionnaire with score {total_score}/10.
+Items scored (autistic-trait answers): {scored_items}.
+Background: age {background['age']}, {gender_label}, immediate family ASD history: {background['austim']}.
+
+Write EXACTLY 5 short, neutral, empathetic follow-up questions (max 20 words each)
+that explore everyday behaviours related to the scored items above.
+Questions must be answerable in one or two sentences.
+
+Return ONLY a JSON array of 5 strings. No markdown, no extra text."""
+
+    raw = ask_gemini(prompt)
+    if raw:
+        match = re.search(r"\[.*\]", raw, re.S)
+        if match:
+            try:
+                questions = [str(q) for q in json.loads(match.group(0))][:5]
+                while len(questions) < 5:
+                    questions.append(DEFAULT_FOLLOW_UPS[len(questions)])
+                return questions, True
+            except (ValueError, TypeError):
+                pass
+    return list(DEFAULT_FOLLOW_UPS), False
+
+
+def build_ai_summary(prediction, confidence, total_score, selections, background, fu_pairs):
+    outcome = (
+        "traits associated with autism were detected"
+        if prediction == 1
+        else "no strong indicators of autism were detected"
+    )
+    answered_block = "\n".join(
+        f"- Q{s['item']['id']} ({'agree' if s['choice'] in AGREE_VALUES else 'disagree'}): "
+        f"{s['item']['text']}"
+        for s in selections
+    )
+    fu_block = "\n".join(
+        f"- Q: {pair['question']}\n  A: {pair['answer']}"
+        for pair in fu_pairs
+    ) or "No follow-up answers provided."
+
+    prompt = f"""You are writing a supportive summary for a preliminary autism screening result.
+This tool is educational and cannot diagnose anyone.
+
+Model outcome: {outcome} (model confidence {confidence:.0f}%).
+AQ-10 indicator score: {total_score}/10.
+AQ-10 responses:
+{answered_block}
+
+Follow-up questions and the user's own words:
+{fu_block}
+
+Write ONE paragraph of 4-6 plain sentences for a general audience.
+Acknowledge the effort of completing the screening, explain what the result means
+in simple everyday words, clearly state this is NOT a diagnosis, and suggest one
+concrete next step. Warm, factual, jargon-free tone.
+Return only the paragraph."""
+
+    return ask_gemini(prompt)
 
 
 def encode_feature(column, value):
@@ -59,27 +157,6 @@ def collect_answers(form):
         selections.append({"item": item, "choice": choice, "scored": scored})
         total_score += scored
     return selections, total_score
-
-
-@app.route("/")
-def home():
-    return render_template("index.html", meta=meta, metrics=metrics)
-
-
-@app.route("/assess", methods=["GET", "POST"])
-def assess():
-    if request.method == "POST":
-        background = extract_background_raw(request.form)
-        saved_answers = extract_saved_answers(request.form)
-    else:
-        background = None
-        saved_answers = None
-    return render_template(
-        "background.html",
-        meta=meta,
-        background=background,
-        saved_answers=saved_answers,
-    )
 
 
 def extract_saved_answers(form):
@@ -140,6 +217,27 @@ def parse_background(form):
     }, None
 
 
+@app.route("/")
+def home():
+    return render_template("index.html", meta=meta, metrics=metrics)
+
+
+@app.route("/assess", methods=["GET", "POST"])
+def assess():
+    if request.method == "POST":
+        background = extract_background_raw(request.form)
+        saved_answers = extract_saved_answers(request.form)
+    else:
+        background = None
+        saved_answers = None
+    return render_template(
+        "background.html",
+        meta=meta,
+        background=background,
+        saved_answers=saved_answers,
+    )
+
+
 @app.route("/questionnaire", methods=["GET", "POST"])
 def questionnaire():
     if request.method == "GET":
@@ -161,6 +259,45 @@ def questionnaire():
         questions=QUESTION_ITEMS,
         background=background,
         saved_answers=extract_saved_answers(request.form),
+    )
+
+
+@app.route("/followup", methods=["GET", "POST"])
+def followup():
+    if request.method == "GET":
+        return redirect(url_for("assess"))
+
+    background, bg_error = parse_background(request.form)
+    if bg_error:
+        return render_template(
+            "background.html",
+            meta=meta,
+            background=extract_background_raw(request.form),
+            saved_answers=extract_saved_answers(request.form),
+            error=bg_error,
+        )
+
+    selections, total_score = collect_answers(request.form)
+    if selections is None:
+        return render_template(
+            "questionnaire.html",
+            meta=meta,
+            questions=QUESTION_ITEMS,
+            background=background,
+            saved_answers=extract_saved_answers(request.form),
+            error="Please answer all ten screening questions before submitting.",
+        )
+
+    fu_questions, ai_used = generate_follow_up_questions(
+        selections, total_score, background
+    )
+    return render_template(
+        "followup.html",
+        meta=meta,
+        background=background,
+        saved_answers=extract_saved_answers(request.form),
+        fu_questions=fu_questions,
+        ai_used=ai_used,
     )
 
 
@@ -204,6 +341,19 @@ def result():
     positive_probability = float(probabilities[classes.index(1)])
     confidence = float(probabilities[classes.index(prediction)])
 
+    fu_pairs = []
+    for i in range(1, 6):
+        question_text = (request.form.get(f"fu_question{i}") or "").strip()
+        answer_text = (request.form.get(f"fu_answer{i}") or "").strip()
+        if question_text and answer_text:
+            fu_pairs.append({"question": question_text, "answer": answer_text})
+
+    ai_summary = None
+    if fu_pairs:
+        ai_summary = build_ai_summary(
+            prediction, confidence, total_score, selections, background, fu_pairs
+        )
+
     summary = [
         ("Age", background["age"]),
         ("Gender", "Male" if background["gender"] == "m" else "Female"),
@@ -224,6 +374,8 @@ def result():
         total_score=total_score,
         selections=selections,
         summary=summary,
+        fu_pairs=fu_pairs,
+        ai_summary=ai_summary,
     )
 
 
